@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private double performOperation(double first, double second, String operation) {
+    public static double performOperation(double first, double second, String operation) {
         switch (operation) {
             case "+":
                 return first + second;
