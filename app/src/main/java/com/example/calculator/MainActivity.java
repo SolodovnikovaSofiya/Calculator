@@ -1,131 +1,99 @@
 package com.example.calculator;
 
-import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
+import android.widget.EditText;
+import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
 
-    private TextView textViewResult, textViewLastResult;
-    private StringBuilder currentInput = new StringBuilder();
-    private double lastResult = 0;
-    private char lastOperator = ' ';
+    private EditText etInput;
+    private String currentNumber = "";
+    private String operation = "";
+    private double firstNumber = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        textViewResult = findViewById(R.id.textViewResult);
-        textViewLastResult = findViewById(R.id.textViewLastResult);
+        etInput = findViewById(R.id.etInput);
 
-        setupDigitButtons();
-
-        setupOperationButtons();
+        setupButtons();
     }
 
-    private void setupDigitButtons() {
-        for (int i = 0; i <= 9; i++) {
-            String buttonID = "button" + i;
-            int resID = getResources().getIdentifier(buttonID, "id", getPackageName());
-            Button button = findViewById(resID);
-            button.setOnClickListener(new View.OnClickListener() {
+    private void setupButtons() {
+        int[] buttonIds = {
+                R.id.btn0, R.id.btn1, R.id.btn2, R.id.btn3, R.id.btn4,
+                R.id.btn5, R.id.btn6, R.id.btn7, R.id.btn8, R.id.btn9,
+                R.id.btnDot, R.id.btnAdd, R.id.btnSubtract, R.id.btnMultiply,
+                R.id.btnDivide, R.id.btnClear, R.id.btnEquals
+        };
+
+        for (int id : buttonIds) {
+            findViewById(id).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    currentInput.append(((Button) v).getText());
-                    updateResult();
+                    onButtonClick(v);
                 }
             });
         }
     }
 
-    private void setupOperationButtons() {
-        String[] operators = {"buttonAdd", "buttonSubtract", "buttonMultiply", "buttonDivide", "buttonPower"};
-        for (String operator : operators) {
-            int resID = getResources().getIdentifier(operator, "id", getPackageName());
-            Button button = findViewById(resID);
-            button.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    handleOperation((String) button.getText());
-                }
-            });
-        }
+    private void onButtonClick(View view) {
+        Button button = (Button) view;
+        String buttonText = button.getText().toString();
 
-        Button buttonEquals = findViewById(R.id.buttonEquals);
-        buttonEquals.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                calculateResult();
-            }
-        });
-
-        Button buttonClear = findViewById(R.id.buttonClear);
-        buttonClear.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                clear();
-            }
-        });
-    }
-
-    private void handleOperation(String operator) {
-        if (currentInput.length() > 0) {
-            calculateResult();
-        }
-        lastOperator = operator.charAt(0);
-        currentInput.setLength(0);
-    }
-
-    private void calculateResult() {
-        if (currentInput.length() == 0) return;
-
-        double num = Double.parseDouble(currentInput.toString());
-        double result = 0;
-
-        switch (lastOperator) {
-            case '+':
-                result = lastResult + num;
+        switch (buttonText) {
+            case "C":
+                currentNumber = "";
+                operation = "";
+                firstNumber = 0;
+                etInput.setText("0");
                 break;
-            case '-':
-                result = lastResult - num;
-                break;
-            case '*':
-                result = lastResult * num;
-                break;
-            case '/':
-                if (num != 0) {
-                    result = lastResult / num;
-                } else {
-                    textViewResult.setText("Error: Division by zero");
-                    return;
+            case "+":
+            case "-":
+            case "*":
+            case "/":
+                if (!currentNumber.isEmpty()) {
+                    firstNumber = Double.parseDouble(currentNumber);
+                    operation = buttonText;
+                    currentNumber = "";
                 }
                 break;
-            case '^':
-                result = Math.pow(lastResult, num);
+            case "=":
+                if (!currentNumber.isEmpty() && !operation.isEmpty()) {
+                    double secondNumber = Double.parseDouble(currentNumber);
+                    double result = performOperation(firstNumber, secondNumber, operation);
+                    etInput.setText(String.valueOf(result));
+                    currentNumber = String.valueOf(result);
+                    operation = "";
+                }
                 break;
             default:
-                result = num;
+                currentNumber += buttonText;
+                etInput.setText(currentNumber);
                 break;
         }
-
-        lastResult = result;
-        textViewResult.setText("Result: " + result);
-        textViewLastResult.setText("Last Result: " + lastResult);
-        currentInput.setLength(0);
     }
 
-    private void updateResult() {
-        textViewResult.setText(currentInput.toString());
-    }
-
-    private void clear() {
-        currentInput.setLength(0);
-        lastResult = 0;
-        lastOperator = ' ';
-        textViewResult.setText("");
-        textViewLastResult.setText("Last Result: ");
+    private double performOperation(double first, double second, String operation) {
+        switch (operation) {
+            case "+":
+                return first + second;
+            case "-":
+                return first - second;
+            case "*":
+                return first * second;
+            case "/":
+                if (second != 0) {
+                    return first / second;
+                } else {
+                    return Double.NaN; // Handle division by zero
+                }
+            default:
+                return second;
+        }
     }
 }
